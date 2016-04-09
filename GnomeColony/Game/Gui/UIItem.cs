@@ -16,6 +16,7 @@ namespace Game.Gui
         public Vector4 Color = Vector4.One;
         public Matrix UVTransform = Matrix.Identity;
         public Action<Game.Play> OnClick = null;
+        public Action<GraphicsDevice, Effect> OnRender = null;
 
         public UIItem FindTopAtPoint(Vector2 Point)
         {
@@ -31,12 +32,16 @@ namespace Game.Gui
 
         public void Render(GraphicsDevice Device, Effect DiffuseEffect)
         {
-            DiffuseEffect.Parameters["DiffuseColor"].SetValue(Color);
-            DiffuseEffect.Parameters["Texture"].SetValue(Texture);
-            DiffuseEffect.Parameters["UVTransform"].SetValue(UVTransform);
-            DiffuseEffect.CurrentTechnique.Passes[0].Apply();
+            if (OnRender != null) OnRender(Device, DiffuseEffect);
+            else
+            {
+                DiffuseEffect.Parameters["DiffuseColor"].SetValue(Color);
+                DiffuseEffect.Parameters["Texture"].SetValue(Texture);
+                DiffuseEffect.Parameters["UVTransform"].SetValue(UVTransform);
+                DiffuseEffect.CurrentTechnique.Passes[0].Apply();
 
-            if (Shape != null) Shape.Render(Device, DiffuseEffect);
+                if (Shape != null) Shape.Render(Device, DiffuseEffect);
+            }
 
             foreach (var child in Children)
                 child.Render(Device, DiffuseEffect);

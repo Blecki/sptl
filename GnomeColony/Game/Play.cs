@@ -12,6 +12,23 @@ namespace Game
 {
     public class Play : IScreen
     {
+        public interface ITransientRenderItem
+        {
+            void Render(GraphicsDevice Device, Effect DiffuseEffect, Play Game);
+        }
+
+        private List<ITransientRenderItem> TransientRenderItems = new List<ITransientRenderItem>();
+
+        public void AddTransientRenderItem(ITransientRenderItem Item)
+        {
+            TransientRenderItems.Add(Item);
+        }
+
+        public void RemoveTransientRenderItem(ITransientRenderItem Item)
+        {
+            TransientRenderItems.Remove(Item);
+        }
+
         public Gem.Input Input { get; set; }
         public Main Main { get; set; }
 
@@ -110,10 +127,35 @@ namespace Game
             },
 
             TileIndex = 35
+        },
+
+        new TileTemplate
+        {
+            CastShadow = true,
+            Solid = true,
+
+            ShadowEdges = new ShadowEdge[]
+            {
+                new ShadowEdge(new Vector2(0,0), new Vector2(1,0), ShadowEdgeDirection.Up),
+                new ShadowEdge(new Vector2(1,0), new Vector2(1,1), ShadowEdgeDirection.Right),
+                new ShadowEdge(new Vector2(1,1), new Vector2(0,1), ShadowEdgeDirection.Down),
+                new ShadowEdge(new Vector2(0,1), new Vector2(0,0), ShadowEdgeDirection.Left),
+            },
+
+            CollisionPoints = new Vector2[]
+            {
+                new Vector2(0, 0),
+                new Vector2(1, 0),
+                new Vector2(1, 1),
+                new Vector2(0, 1)
+            },
+
+            TileIndex = 64
         }
         };
 
         public ChunkedMap<Cell, MapChunkRenderBuffer<Cell>> Map;
+        public ChunkedMap<Wire, MapChunkRenderBuffer<Wire>> WireMap;
         private TileSheet PlayerTileSet;
         private Actor TestActor;
 
@@ -177,12 +219,22 @@ namespace Game
             Blank.SetData(new Color[] { new Color(1, 1, 1, 1) });
 
             TileSet = new TileSheet(Content.Load<Texture2D>("tiles"), 16, 16);
+            WireSet = new TileSheet(Content.Load<Texture2D>("wires"), 8, 8);
+
+            StaticDevices.InitializeStaticDevices();
 
             Map = new ChunkedMap<Cell, MapChunkRenderBuffer<Cell>>(64, 64, 16, 16, 16, 16,
                 (x, y) => new Cell(), 
                 grid => new MapChunkRenderBuffer<Cell>(grid, TileSet, c => (c.Tile == null ? -1 : c.Tile.TileIndex), 16, 16));
 
-            WireSet = new TileSheet(Content.Load<Texture2D>("wires"), 8, 8);
+            WireMap = new ChunkedMap<Wire, MapChunkRenderBuffer<Wire>>(128, 128, 32, 32, 8, 8,
+                (x, y) => new Wire(),
+                grid => new MapChunkRenderBuffer<Wire>(grid, WireSet, w => (w.Connections == 0 ? -1 : w.Connections), 8, 8));
+            WireMap.ForEachCellInWorldRect(0, 0, 128 * 8, 128 * 8, (w, x, y) =>
+            {
+                w.Coordinate = new Coordinate(x, y);
+            });
+
             for (var x = 0; x < 64; ++x)
                 Map.GetCell(x, 32).Tile = TileTemplates[0];
 
@@ -236,6 +288,7 @@ namespace Game
             Input.AddBinding("UP", new KeyboardBinding(Keys.W, KeyBindingType.Held));
             Input.AddBinding("DOWN", new KeyboardBinding(Keys.S, KeyBindingType.Held));
             Input.AddBinding("JUMP", new KeyboardBinding(Keys.Space, KeyBindingType.Held));
+            Input.AddBinding("ROTATEDEVICE", new KeyboardBinding(Keys.Z, KeyBindingType.Pressed));
 
             Lights.Add(new Light { Size = 64 * 16, Location = new Vector2(2, 2), Color = new Vector4(1.0f, 0.0f, 0.0f, 1.0f) });
             Lights.Add(new Light { Size = 32 * 16, Color = Vector4.One });
@@ -248,7 +301,7 @@ namespace Game
 
             foreach (var module in Modules) module.NewEntity(TestActor);
 
-            PushInputState(new MainInputState(Main.GraphicsDevice, Content));
+            PushInputState(new MainInputState(this, Main.GraphicsDevice, Content));
         }
 
         public void End()
@@ -274,7 +327,7 @@ namespace Game
             Lights[0].Location = TestActor.Position;
             Camera.focus = TestActor.Position;
 
-            DebugDisplay.SetString(String.Format("Y Vel: {0}   ", TestActor.Velocity.Y), 0, 0);
+            DebugDisplay.SetString(String.Format("{0}, {1}             ", MouseWorldPosition.X, MouseWorldPosition.Y), 0, 0);
         }
         
         public void Draw(float elapsedSeconds)
@@ -317,8 +370,25 @@ namespace Game
                     chunk.Render(Main.GraphicsDevice);
                 });
 
+            DiffuseEffect.Parameters["Texture"].SetValue(WireSet.Texture);
+
+            WireMap.ForEachChunkInWorldRect(
+                topLeft.X,
+                topLeft.Y,
+                bottomRight.X - topLeft.X,
+                bottomRight.Y - topLeft.Y,
+                (chunk, x, y) =>
+                {
+                    DiffuseEffect.Parameters["World"].SetValue(Matrix.CreateTranslation(x, y, 0));
+                    DiffuseEffect.CurrentTechnique.Passes[0].Apply();
+                    chunk.Render(Main.GraphicsDevice);
+                });
+
             foreach (var module in Modules)
                 module.RenderDiffuse(Main.GraphicsDevice, DiffuseEffect);
+
+            foreach (var transient in TransientRenderItems)
+                transient.Render(Main.GraphicsDevice, DiffuseEffect, this);
 
             foreach (var light in Lights)
             {
@@ -396,7 +466,7 @@ namespace Game
             DebugDisplay.Draw(Main.GraphicsDevice, new Viewport(0, _viewport.Height - 64, _viewport.Width, 64));
 
             foreach (var inputState in InputStates)
-                inputState.Render(Main.GraphicsDevice, DiffuseEffect);
+                inputState.Render(Main.GraphicsDevice, DiffuseEffect, this);
         }
 
         private Vertex[] ShadowGeometryBuffer = new Vertex[4];

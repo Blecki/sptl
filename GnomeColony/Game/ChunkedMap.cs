@@ -218,6 +218,12 @@ namespace Game
             return GetChunk(CellToChunk(GetWrappedCellCoordinate(WorldToCell(coordinate))));
         }
 
+        public ChunkTag GetChunkForCellAt(int X, int Y)
+        {
+            var coordinate = new CellCoordinate(X, Y);
+            return GetChunk(CellToChunk(GetWrappedCellCoordinate(coordinate)));
+        }
+
         public void ForEachChunkInWorldRect(float X, float Y, float W, float H, Action<ChunkTag, int, int> Callback)
         {
             var cX = (int)System.Math.Floor(X / CellWidth);

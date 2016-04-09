@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace Game.Input
 {
@@ -15,7 +16,7 @@ namespace Game.Input
             this.Template = Template;
         }
 
-        public void Update(Play Game)
+        public void Update(Play Game, MainInputState InputState)
         {
             if (Game.Input.Check("LEFTCLICK"))
             {
@@ -24,6 +25,10 @@ namespace Game.Input
                 var chunk = Game.Map.GetChunkForCellAtWorld((int)Game.MouseWorldPosition.X, (int)Game.MouseWorldPosition.Y);
                 chunk.InvalidateMesh();
             }
+        }
+
+        public void Render(GraphicsDevice GraphicsDevice, Effect DiffuseEffect, Play Game)
+        {
         }
     }
 }

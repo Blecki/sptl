@@ -12,9 +12,9 @@ namespace Game
     {
         private TextDisplay Text;
         private GraphicsDevice Device;
-        private Input.ITool ActiveTool = null;
+        public Input.ITool ActiveTool = null;
 
-        public MainInputState(GraphicsDevice Device, Gem.EpisodeContentManager Content) : base(Device)
+        public MainInputState(Play Game, GraphicsDevice Device, Gem.EpisodeContentManager Content) : base(Device)
         {
             this.Device = Device;
             Text = new TextDisplay(22, 32, new Gem.Gui.BitmapFont(Content.Load<Texture2D>("small-font"), 6, 8, 6), Device, Content);
@@ -35,21 +35,50 @@ namespace Game
             };
 
             GuiRoot.Children.Add(selectorButton);
+
+            var wireButton = new Gui.UIItem();
+            wireButton.Shape = Gui.Shape.CreateQuad(8, 256 + 16 + 4 + 32, 32, 32);
+            wireButton.Color = new Vector4(1, 0, 0, 1);
+            wireButton.Texture = Blank;
+            wireButton.OnClick += (p) =>
+            {
+                ActiveTool = new Input.WirePaintTool(Game);
+            };
+
+            GuiRoot.Children.Add(wireButton);
+
+            var deviceButton = new Gui.UIItem();
+            deviceButton.Shape = Gui.Shape.CreateQuad(8, 256 + 16 + 4 + 32 + 32 + 4, 32, 32);
+            deviceButton.Color = new Vector4(0, 1, 0, 1);
+            deviceButton.Texture = Blank;
+            deviceButton.OnClick += p =>
+            {
+                var deviceSelector = new DeviceSelectInputState(Device, p);
+                p.PushInputState(deviceSelector);
+                deviceSelector.OnSelection += d =>
+                {
+                    ActiveTool = new Input.PlaceDeviceTool(d, p);
+                    p.PopInputState();
+                };
+            };
+
+            GuiRoot.Children.Add(deviceButton);
         }
 
-        public override void Render(GraphicsDevice Device, Effect DiffuseEffect)
+        public override void Render(GraphicsDevice Device, Effect DiffuseEffect, Play Game)
         {
             Text.SetString("Hello World!", 0, 0, Color.White, Color.TransparentBlack);
             Text.Draw(Device, new Viewport(8, 8, 132, 256));
 
-            base.Render(Device, DiffuseEffect);
+            base.Render(Device, DiffuseEffect, Game);
+
         }
 
         public override void Update(Play Game)
         {
             base.Update(Game);
             if (!MouseOverGui && ActiveTool != null)
-                ActiveTool.Update(Game);
+                ActiveTool.Update(Game, this);
         }
     }
 }

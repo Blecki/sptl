@@ -35,7 +35,7 @@ namespace Game
                 topUnderMouse.OnClick(Game);
         }
 
-        public override void Render(GraphicsDevice Device, Effect DiffuseEffect)
+        public override void Render(GraphicsDevice Device, Effect DiffuseEffect, Play Game)
         {
             DiffuseEffect.Parameters["World"].SetValue(Matrix.Identity);
             DiffuseEffect.Parameters["View"].SetValue(Camera.View);

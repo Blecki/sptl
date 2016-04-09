@@ -59,6 +59,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Game\Actor.cs" />
+    <Compile Include="Game\Device.cs" />
+    <Compile Include="Game\Input\DeviceSelectInputState.cs" />
+    <Compile Include="Game\Input\PlaceDeviceTool.cs" />
+    <Compile Include="Game\Input\WirePaintTool.cs" />
     <Compile Include="Game\Wire.cs" />
     <Compile Include="Game\ChunkedMap.cs" />
     <Compile Include="Game\EntityStateModule.cs" />
@@ -69,14 +73,14 @@
     <Compile Include="Game\Input\ITool.cs" />
     <Compile Include="Game\Input\TilePaintTool.cs" />
     <Compile Include="Game\Intersection.cs" />
-    <Compile Include="Game\Input\MainGuiInputState.cs" />
+    <Compile Include="Game\Input\MainInputState.cs" />
     <Compile Include="Game\MapChunkRenderBuffer.cs" />
     <Compile Include="Game\PhysicsModule.cs" />
     <Compile Include="Game\Module.cs" />
     <Compile Include="Game\TextDisplay.cs" />
     <Compile Include="Game\Grid.cs" />
     <Compile Include="Game\Mesh.cs" />
-    <Compile Include="Game\TileSelectInputState.cs" />
+    <Compile Include="Game\Input\TileSelectInputState.cs" />
     <Compile Include="Game\TileTemplate.cs" />
     <Compile Include="Gem\Common\Animation.cs" />
     <Compile Include="Gem\Common\AnimationTimer.cs" />

@@ -8,6 +8,12 @@ namespace Game
 {
     public class Wire 
     {
-        public bool Present = false;
+        public const int UP = 1;
+        public const int LEFT = 8;
+        public const int DOWN = 4;
+        public const int RIGHT = 2;
+
+        public int Connections = 0;
+        public Coordinate Coordinate;
     }
 }
