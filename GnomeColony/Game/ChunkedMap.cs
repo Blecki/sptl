@@ -16,6 +16,8 @@ namespace Game
         public int ChunksY { get; private set; }
         public int CellWidth { get; private set; }
         public int CellHeight { get; private set; }
+        public int PixelWidth { get { return Width * CellWidth; } }
+        public int PixelHeight { get { return Height * CellHeight; } }
 
         public ChunkedMap(int Width, int Height, int ChunkWidth, int ChunkHeight, 
             int CellWidth, int CellHeight,
@@ -200,6 +202,11 @@ namespace Game
             var chunkCoordinate = CellToChunk(Coordinate);
             var internalCoordinate = CellToInternal(Coordinate);
             return Data[chunkCoordinate.X, chunkCoordinate.Y][internalCoordinate.X, internalCoordinate.Y];
+        }
+
+        public Cell GetCellUnsafe(Coordinate Coordinate)
+        {
+            return GetCell(Coordinate.X, Coordinate.Y);
         }
 
         public Cell GetCell(int X, int Y)

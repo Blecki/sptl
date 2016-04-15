@@ -10,7 +10,7 @@ using Gem.Render;
 
 namespace Game
 {
-    public class Play : IScreen
+    public partial class Play : IScreen
     {
         public interface ITransientRenderItem
         {
@@ -43,7 +43,7 @@ namespace Game
         private RenderTarget2D ShadowBuffer;
         private RenderTarget2D MainBuffer;
 
-        private OrthographicCamera Camera;
+        public OrthographicCamera Camera;
 
         private Mesh Mesh;
         private Mesh ShadowMesh;
@@ -156,6 +156,7 @@ namespace Game
 
         public ChunkedMap<Cell, MapChunkRenderBuffer<Cell>> Map;
         public ChunkedMap<Wire, MapChunkRenderBuffer<Wire>> WireMap;
+        private int BottomTileSize = 16;
         private TileSheet PlayerTileSet;
         private Actor TestActor;
 
@@ -223,14 +224,21 @@ namespace Game
 
             StaticDevices.InitializeStaticDevices();
 
-            Map = new ChunkedMap<Cell, MapChunkRenderBuffer<Cell>>(64, 64, 16, 16, 16, 16,
+            Map = new ChunkedMap<Cell, MapChunkRenderBuffer<Cell>>(64, 64, 16, 16, 
+                BottomTileSize * 2, BottomTileSize * 2,
                 (x, y) => new Cell(), 
-                grid => new MapChunkRenderBuffer<Cell>(grid, TileSet, c => (c.Tile == null ? -1 : c.Tile.TileIndex), 16, 16));
+                grid => new MapChunkRenderBuffer<Cell>(grid, TileSet, c => (c.Tile == null ? -1 : c.Tile.TileIndex), BottomTileSize * 2, BottomTileSize * 2));
 
-            WireMap = new ChunkedMap<Wire, MapChunkRenderBuffer<Wire>>(128, 128, 32, 32, 8, 8,
+            WireMap = new ChunkedMap<Wire, MapChunkRenderBuffer<Wire>>(128, 128, 32, 32,
+                BottomTileSize, BottomTileSize,
                 (x, y) => new Wire(),
-                grid => new MapChunkRenderBuffer<Wire>(grid, WireSet, w => (w.Connections == 0 ? -1 : w.Connections), 8, 8));
-            WireMap.ForEachCellInWorldRect(0, 0, 128 * 8, 128 * 8, (w, x, y) =>
+                grid => new MapChunkRenderBuffer<Wire>(grid, WireSet, 
+                    w => new int[] {
+                        (w.Cell == null ? -1 : w.Cell.TileIndex),
+                        (w.Connections == 0 ? -1 : (w.Signal == SimulationID - 1 ? w.Connections + 16 : w.Connections))
+                    },
+                    BottomTileSize, BottomTileSize));
+            WireMap.ForEachCellInWorldRect(0, 0, 128 * BottomTileSize, 128 * BottomTileSize, (w, x, y) =>
             {
                 w.Coordinate = new Coordinate(x, y);
             });
@@ -390,6 +398,8 @@ namespace Game
             foreach (var transient in TransientRenderItems)
                 transient.Render(Main.GraphicsDevice, DiffuseEffect, this);
 
+            #region Lights
+            /*
             foreach (var light in Lights)
             {
                 Main.GraphicsDevice.SetRenderTarget(ShadowBuffer);
@@ -397,7 +407,6 @@ namespace Game
 
                 #region Shadows
 
-                /*
                 ShadowEffect.CurrentTechnique = ShadowEffect.Techniques[0];
                 ShadowEffect.Parameters["World"].SetValue(Camera.World);
                 ShadowEffect.Parameters["View"].SetValue(Camera.View);
@@ -434,9 +443,8 @@ namespace Game
                     }
                 });
 
-                */
-
                 #endregion
+
 
                 Main.GraphicsDevice.SetRenderTarget(MainBuffer);
                 LightEffect.CurrentTechnique = LightEffect.Techniques[0];
@@ -453,13 +461,15 @@ namespace Game
 
                 Mesh.Render(Main.GraphicsDevice);
             }
+            */
+            #endregion
 
             Main.GraphicsDevice.SetRenderTarget(null);
             BlitEffect.CurrentTechnique = BlitEffect.Techniques[0];
             BlitEffect.Parameters["World"].SetValue(Matrix.Identity);
             BlitEffect.Parameters["View"].SetValue(Matrix.Identity);
             BlitEffect.Parameters["Projection"].SetValue(Matrix.CreateOrthographic(1, 1, -1, 1));
-            BlitEffect.Parameters["Diffuse"].SetValue(MainBuffer);
+            BlitEffect.Parameters["Diffuse"].SetValue(DiffuseBuffer /* Change to MainBuffer for lighting */);
             BlitEffect.CurrentTechnique.Passes[0].Apply();
             Mesh.Render(Main.GraphicsDevice);
 
@@ -558,6 +568,11 @@ namespace Game
                 ShadowGeometryBuffer[2].TextureCoordinate = new Vector2(0, 0);
 
                 Main.GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, ShadowGeometryBuffer, 0, 1);
+        }
+
+        public void Simulate()
+        {
+            SimulateSignals();
         }
     }
 }

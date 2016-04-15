@@ -35,5 +35,10 @@ namespace Game
             return A.X != B.X || A.Y != B.Y;
         }
 
+        public Coordinate Offset(int X, int Y)
+        {
+            return new Coordinate(this.X + X, this.Y + Y);
+        }
+
     }
 }

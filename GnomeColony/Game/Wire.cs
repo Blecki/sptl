@@ -15,5 +15,10 @@ namespace Game
 
         public int Connections = 0;
         public Coordinate Coordinate;
+
+        public int Signal = 0;
+
+        public Device Device;
+        public DeviceCell Cell;
     }
 }

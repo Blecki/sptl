@@ -24,15 +24,34 @@ namespace Game.Input
             if (DeviceMesh == null)
             {
                 DeviceMesh = Device.CreateMesh(Game.WireSet);
-                Mesh.Transform(DeviceMesh, Matrix.CreateScale(8));
+                Mesh.Transform(DeviceMesh, Matrix.CreateScale(Game.WireMap.CellWidth));
             }
-            
-            DiffuseEffect.Parameters["World"].SetValue(Matrix.CreateTranslation(Game.MouseWorldPosition.X, Game.MouseWorldPosition.Y, 1.0f));
-            DiffuseEffect.Parameters["Texture"].SetValue(Game.WireSet.Texture);
-            DiffuseEffect.Parameters["UVTransform"].SetValue(Matrix.Identity);
-            DiffuseEffect.CurrentTechnique.Passes[0].Apply();
 
-            DeviceMesh.Render(GraphicsDevice);
+            var tileUnderMouse = Game.WireMap.WorldToCell(
+                            new ChunkedMap<Wire, MapChunkRenderBuffer<Wire>>.WorldCoordinate((int)Game.MouseWorldPosition.X, (int)Game.MouseWorldPosition.Y));
+
+            var rejectPlacement = false;
+
+            Game.WireMap.ForEachCellInWorldRect(
+                   tileUnderMouse.X * Game.WireMap.CellWidth,
+                   tileUnderMouse.Y * Game.WireMap.CellHeight,
+                   Device.Width * Game.WireMap.CellWidth,
+                   Device.Height * Game.WireMap.CellHeight,
+                   (w, x, y) =>
+                   {
+                       if (w.Device != null)
+                           rejectPlacement = true;
+                   });
+
+            if (!rejectPlacement)
+            {
+                DiffuseEffect.Parameters["World"].SetValue(Matrix.CreateTranslation(tileUnderMouse.X * Game.WireMap.CellWidth, tileUnderMouse.Y * Game.WireMap.CellHeight, 0.0f));
+                DiffuseEffect.Parameters["Texture"].SetValue(Game.WireSet.Texture);
+                DiffuseEffect.Parameters["UVTransform"].SetValue(Matrix.Identity);
+                DiffuseEffect.CurrentTechnique.Passes[0].Apply();
+
+                DeviceMesh.Render(GraphicsDevice);
+            }
         }
 
         public void Update(Play Game, MainInputState InputState)
@@ -40,6 +59,39 @@ namespace Game.Input
             if (Game.Input.Check("LEFTCLICK"))
             {
                 // Place device on grid.
+                var tileUnderMouse = Game.WireMap.WorldToCell(
+                    new ChunkedMap<Wire, MapChunkRenderBuffer<Wire>>.WorldCoordinate((int)Game.MouseWorldPosition.X, (int)Game.MouseWorldPosition.Y));
+
+                var rejectPlacement = false;
+
+                Game.WireMap.ForEachCellInWorldRect(
+                   tileUnderMouse.X * Game.WireMap.CellWidth,
+                   tileUnderMouse.Y * Game.WireMap.CellHeight,
+                   Device.Width * Game.WireMap.CellWidth,
+                   Device.Height * Game.WireMap.CellHeight,
+                   (w, x, y) =>
+                   {
+                       if (w.Device != null)
+                           rejectPlacement = true;
+                   });
+
+                if (!rejectPlacement)
+                {
+                    Game.WireMap.ForEachCellInWorldRect(
+                        tileUnderMouse.X * Game.WireMap.CellWidth,
+                        tileUnderMouse.Y * Game.WireMap.CellHeight,
+                        Device.Width * Game.WireMap.CellWidth,
+                        Device.Height * Game.WireMap.CellHeight,
+                        (w, x, y) =>
+                        {
+                            w.Device = Device;
+                            var cellIndex = ((y - tileUnderMouse.Y) * Device.Width) + (x - tileUnderMouse.X);
+                            w.Cell = Device.Cells[cellIndex];
+                            var chunk = Game.WireMap.GetChunkForCellAt(x, y);
+                            chunk.InvalidateMesh();
+                        });
+                }
+
                 InputState.ActiveTool = null;
                 Game.RemoveTransientRenderItem(this);
             }
