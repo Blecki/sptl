@@ -37,5 +37,13 @@ namespace Game
                 frame.Children.Add(icon);
             }
         }
+
+        public override void Update(Play Game)
+        {
+            if (Game.Input.Check("ESCAPE"))
+                Game.PopInputState();
+            else
+                base.Update(Game);
+        }
     }
 }

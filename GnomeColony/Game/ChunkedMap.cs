@@ -225,6 +225,11 @@ namespace Game
             return GetChunk(CellToChunk(GetWrappedCellCoordinate(WorldToCell(coordinate))));
         }
 
+        public ChunkTag GetChunkForCellAt(Coordinate C)
+        {
+            return GetChunkForCellAt(C.X, C.Y);
+        }
+
         public ChunkTag GetChunkForCellAt(int X, int Y)
         {
             var coordinate = new CellCoordinate(X, Y);

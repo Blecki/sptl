@@ -14,46 +14,13 @@ namespace Game
 
         private static int SimulationID = 2;
 
-        private void TryOpenWire(Wire w, int CurrentSimulation, List<Wire> OpenWires, List<DeviceSignalActivation> Activations)
+        public List<DeviceSignalActivation> SimulateSignals(List<DeviceSignalActivation> PreviousActivations)
         {
-            if (w.Signal != CurrentSimulation)
-            {
-                w.Signal = CurrentSimulation;
-                if (w.Cell != null)
-                {
-                    if (w.Device.OnSignal != null)
-                    {
-                        var newActivations = w.Device.OnSignal(CurrentSimulation, w, this);
-                        foreach (var c in newActivations)
-                        {
-                            if (c.Condition(this))
-                                OpenWires.Add(WireMap.GetCellUnsafe(c.Location));
-                            else
-                                Activations.Add(c);
-                        }
-                    }
-                }
-                else
-                    OpenWires.Add(w); // No device - just open it.
-            }
-        }
-
-
-        private void TryOpenWireIgnoreDevice(Wire w, int CurrentSimulation, List<Wire> OpenWires)
-        {
-            if (w.Signal != CurrentSimulation)
-            {
-                w.Signal = CurrentSimulation;
-                OpenWires.Add(w); // No device - just open it.
-            }
-        }
-
-        public void SimulateSignals()
-        {
-            var openWires = new List<Wire>();
+            var openWires = new List<Tuple<bool, Wire>>();
             var activations = new List<DeviceSignalActivation>();
-            var currentSimulation = SimulationID;
+            var previousSimulation = SimulationID;
             SimulationID += 1;
+            var currentSimulation = SimulationID;
 
             WireMap.ForEachCellInWorldRect(0, 0, WireMap.PixelWidth, WireMap.PixelHeight,
                 (w, x, y) =>
@@ -61,22 +28,26 @@ namespace Game
                     if (w.Cell != null && w.Cell.Source)
                     {
                         //w.Signal = currentSimulation;
-                        openWires.Add(w);
+                        openWires.Add(Tuple.Create(false, w));
                     }
                 });
 
-            while (true)
-            {
+            foreach (var activation in PreviousActivations)
+                if (activation.Condition == null || activation.Condition(this))
+                    openWires.Add(Tuple.Create(false, WireMap.GetCellUnsafe(activation.Location)));
 
+           
                 while (openWires.Count > 0)
                 {
-                    var nextWire = openWires[0];
+                    var open = openWires[0];
+                    var nextWire = open.Item2;
                     openWires.RemoveAt(0);
-
-                    if (nextWire.Signal == currentSimulation) continue;
+                    
+                if (nextWire.Signal == currentSimulation) continue;
 
                     nextWire.Signal = currentSimulation;
-                    if (nextWire.Cell != null)
+
+                    if (open.Item1 && nextWire.Cell != null)
                     {
                         if (nextWire.Device.OnSignal != null)
                         {
@@ -87,37 +58,19 @@ namespace Game
                     }
 
                     if ((nextWire.Connections & Wire.UP) == Wire.UP)
-                        openWires.Add(WireMap.GetCell(nextWire.Coordinate.X, nextWire.Coordinate.Y - 1));
+                        openWires.Add(Tuple.Create(true, WireMap.GetCell(nextWire.Coordinate.X, nextWire.Coordinate.Y - 1)));
                     if ((nextWire.Connections & Wire.DOWN) == Wire.DOWN)
-                        openWires.Add(WireMap.GetCell(nextWire.Coordinate.X, nextWire.Coordinate.Y + 1));
+                        openWires.Add(Tuple.Create(true, WireMap.GetCell(nextWire.Coordinate.X, nextWire.Coordinate.Y + 1)));
                     if ((nextWire.Connections & Wire.RIGHT) == Wire.RIGHT)
-                        openWires.Add(WireMap.GetCell(nextWire.Coordinate.X + 1, nextWire.Coordinate.Y));
+                        openWires.Add(Tuple.Create(true, WireMap.GetCell(nextWire.Coordinate.X + 1, nextWire.Coordinate.Y)));
                     if ((nextWire.Connections & Wire.LEFT) == Wire.LEFT)
-                        openWires.Add(WireMap.GetCell(nextWire.Coordinate.X - 1, nextWire.Coordinate.Y));
+                        openWires.Add(Tuple.Create(true, WireMap.GetCell(nextWire.Coordinate.X - 1, nextWire.Coordinate.Y)));
                 }
 
-                var activationsTriggered = 0;
-
-                for (var a = 0; a < activations.Count;)
-                {
-                    var activation = activations[a];
-                    if (activation.Condition(this))
-                    {
-                        var wire = WireMap.GetCellUnsafe(activation.Location);
-                        openWires.Add(wire);
-                        
-                        activations.RemoveAt(a);
-
-                        activationsTriggered += 1;
-                    }
-                    else
-                        a += 1;
-                }
-
-                if (activationsTriggered == 0) break;
-            }
             
             WireMap.ForEachChunk((c, x, y) => c.InvalidateMesh());
+
+            return activations;
         }
     }
 }

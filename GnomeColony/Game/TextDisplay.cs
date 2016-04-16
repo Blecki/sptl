@@ -72,10 +72,10 @@ namespace Game
                     lines[y].verts[i * 4 + 1].FGColor = Color.White.ToVector4();
                     lines[y].verts[i * 4 + 2].FGColor = Color.White.ToVector4();
                     lines[y].verts[i * 4 + 3].FGColor = Color.White.ToVector4();
-                    lines[y].verts[i * 4 + 0].BGColor = Color.Black.ToVector4();
-                    lines[y].verts[i * 4 + 1].BGColor = Color.Black.ToVector4();
-                    lines[y].verts[i * 4 + 2].BGColor = Color.Black.ToVector4();
-                    lines[y].verts[i * 4 + 3].BGColor = Color.Black.ToVector4();
+                    lines[y].verts[i * 4 + 0].BGColor = Color.TransparentBlack.ToVector4();
+                    lines[y].verts[i * 4 + 1].BGColor = Color.TransparentBlack.ToVector4();
+                    lines[y].verts[i * 4 + 2].BGColor = Color.TransparentBlack.ToVector4();
+                    lines[y].verts[i * 4 + 3].BGColor = Color.TransparentBlack.ToVector4();
                 }
                 lines[y].buffer = new VertexBuffer(device, typeof(Gem.Console.ConsoleVertex), lines[y].verts.Length, BufferUsage.None);
             }

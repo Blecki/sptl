@@ -56,6 +56,12 @@ namespace Game.Input
 
         public void Update(Play Game, MainInputState InputState)
         {
+            if (Game.Input.Check("ESCAPE"))
+            {
+                InputState.ActiveTool = new DefaultInteractionTool();
+                return;
+            }
+
             if (Game.Input.Check("LEFTCLICK"))
             {
                 // Place device on grid.
@@ -92,7 +98,7 @@ namespace Game.Input
                         });
                 }
 
-                InputState.ActiveTool = null;
+                InputState.ActiveTool = new DefaultInteractionTool();
                 Game.RemoveTransientRenderItem(this);
             }
             else if (Game.Input.Check("ROTATEDEVICE"))

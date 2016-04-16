@@ -18,6 +18,7 @@ namespace Game
         {
             this.Device = Device;
             Text = new TextDisplay(22, 32, new Gem.Gui.BitmapFont(Content.Load<Texture2D>("small-font"), 6, 8, 6), Device, Content);
+            ActiveTool = new Input.DefaultInteractionTool();
 
             var selectorButton = new Gui.UIItem();
             selectorButton.Shape = Gui.Shape.CreateQuad(8, 256 + 16, 32, 32);
@@ -38,8 +39,9 @@ namespace Game
 
             var wireButton = new Gui.UIItem();
             wireButton.Shape = Gui.Shape.CreateQuad(8, 256 + 16 + 4 + 32, 32, 32);
-            wireButton.Color = new Vector4(1, 0, 0, 1);
-            wireButton.Texture = Blank;
+            wireButton.Color = new Vector4(1, 1, 1, 1);
+            wireButton.Texture = Game.GuiSet.Texture;
+            wireButton.UVTransform = Game.GuiSet.TileMatrix(0);
             wireButton.OnClick += (p) =>
             {
                 ActiveTool = new Input.WirePaintTool(Game);
@@ -75,7 +77,7 @@ namespace Game
 
         public override void Render(GraphicsDevice Device, Effect DiffuseEffect, Play Game)
         {
-            Text.SetString("Hello World!", 0, 0, Color.White, Color.TransparentBlack);
+            Text.SetString("Hello World!", 0, 0, Color.Black, Color.TransparentBlack);
             Text.Draw(Device, new Viewport(8, 8, 132, 256));
 
             base.Render(Device, DiffuseEffect, Game);

@@ -49,6 +49,7 @@ namespace Game
         }
 
         public Func<int, Wire, Play, List<DeviceSignalActivation>> OnSignal = null;
+        public Action<Wire, Play> OnClick = null;
     }
 
     public static class StaticDevices
@@ -142,7 +143,60 @@ namespace Game
 
             verticalTransistor.Rotated = horizontalTransistor;
             horizontalTransistor.Rotated = verticalTransistor;
-            
+
+            var verticalNotTransistor = new Device
+            {
+                Width = 1,
+                Height = 3,
+                Cells = new DeviceCell[3]
+                {
+                    new DeviceCell { TileIndex = 38, Terminal = true, ID = 0 },
+                    new DeviceCell { TileIndex = 54, Terminal = true, ID = 1 },
+                    new DeviceCell { TileIndex = 70, Terminal = true, ID = 2 }
+                },
+                OnSignal = (signal, wire, game) =>
+                {
+                    if (wire.Cell.ID == 0 || wire.Cell.ID == 2)
+                    {
+                        var oppositeEndOffset = wire.Cell.ID == 0 ? 2 : -2;
+                        return ActivationList(new DeviceSignalActivation
+                        {
+                            Location = wire.Coordinate.Offset(0, oppositeEndOffset),
+                            Condition = (g) => g.WireMap.GetCellUnsafe(wire.Coordinate.Offset(0, wire.Cell.ID == 0 ? 1 : -1)).Signal != signal
+                        });
+                    }
+                    else return ActivationList();
+                }
+            };
+
+            var horizontalNotTransistor = new Device
+            {
+                Width = 3,
+                Height = 1,
+                Cells = new DeviceCell[3]
+                {
+                    new DeviceCell { TileIndex = 39, Terminal = true, ID = 0 },
+                    new DeviceCell { TileIndex = 40, Terminal = true, ID = 1 },
+                    new DeviceCell { TileIndex = 41, Terminal = true, ID = 2 }
+                },
+                OnSignal = (signal, wire, game) =>
+                {
+                    if (wire.Cell.ID == 0 || wire.Cell.ID == 2)
+                    {
+                        var oppositeEndOffset = wire.Cell.ID == 0 ? 2 : -2;
+                        return ActivationList(new DeviceSignalActivation
+                        {
+                            Location = wire.Coordinate.Offset(oppositeEndOffset, 0),
+                            Condition = (g) => g.WireMap.GetCellUnsafe(wire.Coordinate.Offset(wire.Cell.ID == 0 ? 1 : -1, 0)).Signal != signal
+                        });
+                    }
+                    else return ActivationList();
+                }
+            };
+
+            verticalNotTransistor.Rotated = horizontalNotTransistor;
+            horizontalNotTransistor.Rotated = verticalNotTransistor;
+
             var negative = new Device
             {
                 Width = 1,
@@ -155,10 +209,123 @@ namespace Game
 
             negative.Rotated = negative;
 
+            var verticalSwitch = new Device
+            {
+                Width = 1,
+                Height = 2,
+                Cells = new DeviceCell[4]
+                {
+                    new DeviceCell { TileIndex = 53, Terminal = true, ID = 0 },
+                    new DeviceCell { TileIndex = 69, Terminal = true, ID = 1 },
+                    new DeviceCell { TileIndex = 55, Terminal = true, ID = 2 },
+                    new DeviceCell { TileIndex = 71, Terminal = true, ID = 3 }
+                },
+                OnClick = (wire, game) =>
+                {
+                    if (wire.Cell.ID == 0)
+                    {
+                        wire.Cell = wire.Device.Cells[2];
+                        game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(0, 1)).Cell = wire.Device.Cells[3];
+                        game.WireMap.GetChunkForCellAt(wire.Coordinate).InvalidateMesh();
+                        game.WireMap.GetChunkForCellAt(wire.Coordinate.Offset(0, 1)).InvalidateMesh();
+                    }
+                    else if (wire.Cell.ID == 1)
+                    {
+                        wire.Cell = wire.Device.Cells[3];
+                        game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(0, -1)).Cell = wire.Device.Cells[2];
+                        game.WireMap.GetChunkForCellAt(wire.Coordinate).InvalidateMesh();
+                        game.WireMap.GetChunkForCellAt(wire.Coordinate.Offset(0, -1)).InvalidateMesh();
+                    }
+                    else if (wire.Cell.ID == 2)
+                    {
+                        wire.Cell = wire.Device.Cells[0];
+                        game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(0, 1)).Cell = wire.Device.Cells[1];
+                        game.WireMap.GetChunkForCellAt(wire.Coordinate).InvalidateMesh();
+                        game.WireMap.GetChunkForCellAt(wire.Coordinate.Offset(0, 1)).InvalidateMesh();
+                    }
+                    else if (wire.Cell.ID == 3)
+                    {
+                        wire.Cell = wire.Device.Cells[1];
+                        game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(0, -1)).Cell = wire.Device.Cells[0];
+                        game.WireMap.GetChunkForCellAt(wire.Coordinate).InvalidateMesh();
+                        game.WireMap.GetChunkForCellAt(wire.Coordinate.Offset(0, -1)).InvalidateMesh();
+                    }
+                },
+
+                OnSignal = (signal, wire, game) =>
+                {
+                    if (wire.Cell.ID == 0)
+                        return ActivationList(new DeviceSignalActivation { Location = wire.Coordinate.Offset(0, 1) });
+                    else if (wire.Cell.ID == 1)
+                        return ActivationList(new DeviceSignalActivation { Location = wire.Coordinate.Offset(0, -1) });
+                    else
+                        return ActivationList();
+                }
+            };
+
+            var horizontalSwitch = new Device
+            {
+                Width = 2,
+                Height = 1,
+                Cells = new DeviceCell[4]
+    {
+                    new DeviceCell { TileIndex = 67, Terminal = true, ID = 0 },
+                    new DeviceCell { TileIndex = 68, Terminal = true, ID = 1 },
+                    new DeviceCell { TileIndex = 56, Terminal = true, ID = 2 },
+                    new DeviceCell { TileIndex = 57, Terminal = true, ID = 3 }
+    },
+                OnClick = (wire, game) =>
+                {
+                    if (wire.Cell.ID == 0)
+                    {
+                        wire.Cell = wire.Device.Cells[2];
+                        game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(1, 0)).Cell = wire.Device.Cells[3];
+                        game.WireMap.GetChunkForCellAt(wire.Coordinate).InvalidateMesh();
+                        game.WireMap.GetChunkForCellAt(wire.Coordinate.Offset(1, 0)).InvalidateMesh();
+                    }
+                    else if (wire.Cell.ID == 1)
+                    {
+                        wire.Cell = wire.Device.Cells[3];
+                        game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(-1, 0)).Cell = wire.Device.Cells[2];
+                        game.WireMap.GetChunkForCellAt(wire.Coordinate).InvalidateMesh();
+                        game.WireMap.GetChunkForCellAt(wire.Coordinate.Offset(-1, 0)).InvalidateMesh();
+                    }
+                    else if (wire.Cell.ID == 2)
+                    {
+                        wire.Cell = wire.Device.Cells[0];
+                        game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(1, 0)).Cell = wire.Device.Cells[1];
+                        game.WireMap.GetChunkForCellAt(wire.Coordinate).InvalidateMesh();
+                        game.WireMap.GetChunkForCellAt(wire.Coordinate.Offset(1, 0)).InvalidateMesh();
+                    }
+                    else if (wire.Cell.ID == 3)
+                    {
+                        wire.Cell = wire.Device.Cells[1];
+                        game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(-1, 0)).Cell = wire.Device.Cells[0];
+                        game.WireMap.GetChunkForCellAt(wire.Coordinate).InvalidateMesh();
+                        game.WireMap.GetChunkForCellAt(wire.Coordinate.Offset(-1, 0)).InvalidateMesh();
+                    }
+                },
+
+                OnSignal = (signal, wire, game) =>
+                {
+                    if (wire.Cell.ID == 0)
+                        return ActivationList(new DeviceSignalActivation { Location = wire.Coordinate.Offset(1, 0) });
+                    else if (wire.Cell.ID == 1)
+                        return ActivationList(new DeviceSignalActivation { Location = wire.Coordinate.Offset(-1, 0) });
+                    else
+                        return ActivationList();
+                }
+            };
+
+            verticalSwitch.Rotated = horizontalSwitch;
+            horizontalSwitch.Rotated = verticalSwitch;
+
             RootDevices = new List<Device>();
             RootDevices.Add(crossover);
             RootDevices.Add(negative);
             RootDevices.Add(verticalTransistor);
+            RootDevices.Add(verticalNotTransistor);
+            RootDevices.Add(verticalSwitch);
         }
     }
 }

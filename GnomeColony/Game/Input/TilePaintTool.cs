@@ -18,6 +18,12 @@ namespace Game.Input
 
         public void Update(Play Game, MainInputState InputState)
         {
+            if (Game.Input.Check("ESCAPE"))
+            {
+                InputState.ActiveTool = new DefaultInteractionTool();
+                return;
+            }
+
             if (Game.Input.Check("LEFTCLICK"))
             {
                 var cell = Game.Map.GetCellAtWorld((int)Game.MouseWorldPosition.X, (int)Game.MouseWorldPosition.Y);

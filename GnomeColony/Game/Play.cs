@@ -55,6 +55,7 @@ namespace Game
         public Vector2 MousePosition;
         public Vector2 MouseWorldPosition;
 
+        public TileSheet GuiSet;
         public TileSheet TileSet;
         public TileSheet WireSet;
         public TileTemplate[] TileTemplates = new TileTemplate[]
@@ -221,6 +222,7 @@ namespace Game
 
             TileSet = new TileSheet(Content.Load<Texture2D>("tiles"), 16, 16);
             WireSet = new TileSheet(Content.Load<Texture2D>("wires"), 8, 8);
+            GuiSet = new TileSheet(Content.Load<Texture2D>("gui"), 32, 32);
 
             StaticDevices.InitializeStaticDevices();
 
@@ -234,8 +236,8 @@ namespace Game
                 (x, y) => new Wire(),
                 grid => new MapChunkRenderBuffer<Wire>(grid, WireSet, 
                     w => new int[] {
-                        (w.Cell == null ? -1 : w.Cell.TileIndex),
-                        (w.Connections == 0 ? -1 : (w.Signal == SimulationID - 1 ? w.Connections + 16 : w.Connections))
+                        (w.Connections == 0 ? -1 : (w.Signal == SimulationID ? w.Connections + 16 : w.Connections)),
+                        (w.Cell == null ? -1 : w.Cell.TileIndex)
                     },
                     BottomTileSize, BottomTileSize));
             WireMap.ForEachCellInWorldRect(0, 0, 128 * BottomTileSize, 128 * BottomTileSize, (w, x, y) =>
@@ -297,6 +299,7 @@ namespace Game
             Input.AddBinding("DOWN", new KeyboardBinding(Keys.S, KeyBindingType.Held));
             Input.AddBinding("JUMP", new KeyboardBinding(Keys.Space, KeyBindingType.Held));
             Input.AddBinding("ROTATEDEVICE", new KeyboardBinding(Keys.Z, KeyBindingType.Pressed));
+            Input.AddBinding("ESCAPE", new KeyboardBinding(Keys.Escape, KeyBindingType.Pressed));
 
             Lights.Add(new Light { Size = 64 * 16, Location = new Vector2(2, 2), Color = new Vector4(1.0f, 0.0f, 0.0f, 1.0f) });
             Lights.Add(new Light { Size = 32 * 16, Color = Vector4.One });
@@ -570,9 +573,11 @@ namespace Game
                 Main.GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, ShadowGeometryBuffer, 0, 1);
         }
 
+        private List<DeviceSignalActivation> _activations = new List<DeviceSignalActivation>();
+
         public void Simulate()
         {
-            SimulateSignals();
+            _activations = SimulateSignals(_activations);
         }
     }
 }
