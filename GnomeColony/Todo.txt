@@ -1,3 +1,4 @@
 ﻿Erase tool
 Icons for tool buttons
 Properly space devices in selector panel
+Erase internal connections under device when placing device

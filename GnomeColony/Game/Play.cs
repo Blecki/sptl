@@ -55,6 +55,10 @@ namespace Game
         public Vector2 MousePosition;
         public Vector2 MouseWorldPosition;
 
+        private float TimeSinceSignalTick = 0.0f;
+        private float SignalTickRate = 1.0f;
+
+
         public TileSheet GuiSet;
         public TileSheet TileSet;
         public TileSheet WireSet;
@@ -338,7 +342,14 @@ namespace Game
             Lights[0].Location = TestActor.Position;
             Camera.focus = TestActor.Position;
 
-            DebugDisplay.SetString(String.Format("{0}, {1}             ", MouseWorldPosition.X, MouseWorldPosition.Y), 0, 0);
+            DebugDisplay.SetString(String.Format("{0}, {1}             ", MouseWorldPosition.X, MouseWorldPosition.Y), 0, 0, Color.Black);
+
+            TimeSinceSignalTick += ElapsedSeconds;
+            if (TimeSinceSignalTick > SignalTickRate)
+            {
+                TimeSinceSignalTick = 0.0f;
+                Simulate();
+            }
         }
         
         public void Draw(float elapsedSeconds)

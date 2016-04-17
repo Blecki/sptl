@@ -65,14 +65,6 @@ namespace Game
             };
 
             GuiRoot.Children.Add(deviceButton);
-
-            var simulateButton = new Gui.UIItem();
-            simulateButton.Shape = Gui.Shape.CreateQuad(8, 256 + 16 + 4 + 32 + 32 + 4 + 32 + 4, 32, 32);
-            simulateButton.Color = new Vector4(0, 0, 1, 1);
-            simulateButton.Texture = Blank;
-            simulateButton.OnClick += p => p.Simulate();
-
-            GuiRoot.Children.Add(simulateButton);
         }
 
         public override void Render(GraphicsDevice Device, Effect DiffuseEffect, Play Game)
