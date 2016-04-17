@@ -94,6 +94,7 @@ namespace Game.Input
                             var cellIndex = ((y - tileUnderMouse.Y) * Device.Width) + (x - tileUnderMouse.X);
                             w.Cell = Device.Cells[cellIndex];
                             var chunk = Game.WireMap.GetChunkForCellAt(x, y);
+                            w.DeviceRoot = new Coordinate(tileUnderMouse.X, tileUnderMouse.Y);
                             chunk.InvalidateMesh();
                         });
                 }

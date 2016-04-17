@@ -65,7 +65,16 @@ namespace Game
             };
 
             GuiRoot.Children.Add(deviceButton);
-        }
+
+            var eraseButton = new Gui.UIItem();
+            eraseButton.Shape = Gui.Shape.CreateQuad(8, 256 + 16 + 4 + 32 + 32 + 4 + 36, 32, 32);
+            eraseButton.Color = new Vector4(0, 1, 0, 1);
+            eraseButton.Texture = Blank;
+            eraseButton.OnClick += p => ActiveTool = new Input.EraserTool();
+
+            GuiRoot.Children.Add(eraseButton);
+        
+    }
 
         public override void Render(GraphicsDevice Device, Effect DiffuseEffect, Play Game)
         {

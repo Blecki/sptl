@@ -63,6 +63,7 @@
     <Compile Include="Game\Input\DeviceSelectInputState.cs" />
     <Compile Include="Game\Input\PlaceDeviceTool.cs" />
     <Compile Include="Game\Input\DefaultInteractionTool.cs" />
+    <Compile Include="Game\Input\EraserTool.cs" />
     <Compile Include="Game\Input\WirePaintTool.cs" />
     <Compile Include="Game\SimulateSignals.cs" />
     <Compile Include="Game\Wire.cs" />

@@ -20,5 +20,6 @@ namespace Game
 
         public Device Device;
         public DeviceCell Cell;
+        public Coordinate DeviceRoot;
     }
 }

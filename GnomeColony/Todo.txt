@@ -1,4 +1,6 @@
-﻿Erase tool
-Icons for tool buttons
+﻿Icons for tool buttons
 Properly space devices in selector panel
 Erase internal connections under device when placing device
+LED device - 
+	Render world in 'twilight'. No lights but with ambient light?
+	Place lights on powered LEDs.
