@@ -254,8 +254,8 @@ namespace Game
 
         public void ForEachCellInWorldRect(float X, float Y, float Width, float Height, Action<Cell, int, int> Callback)
         {
-            for (var _x = (int)(X / CellWidth); (_x * CellWidth) < X + Width; ++_x)
-                for (var _y = (int)(Y / CellHeight); (_y * CellWidth) < Y + Height; ++_y)
+            for (var _x = (int)Math.Floor(X / CellWidth); (_x * CellWidth) < X + Width; ++_x)
+                for (var _y = (int)Math.Floor(Y / CellHeight); (_y * CellWidth) < Y + Height; ++_y)
                     Callback(GetCell(new CellCoordinate(_x, _y)), _x, _y);
         }
     }

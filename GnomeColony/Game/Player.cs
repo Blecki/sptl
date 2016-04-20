@@ -31,14 +31,14 @@ namespace Game
         {
             return (p) =>
             {
-                if (p.Input.Check("LEFT")) p.Velocity.X -= 0.05f;
-                if (p.Input.Check("RIGHT")) p.Velocity.X += 0.05f;
+                if (p.Input.Check("LEFT")) p.Velocity.X -= 2.0f;
+                if (p.Input.Check("RIGHT")) p.Velocity.X += 2.0f;
             };
         }
 
         private static void _applyRunForce(Actor A)
         {
-            A.Velocity.X += (A.Facing * 0.5f);
+            A.Velocity.X += (A.Facing * 16.0f);
         }
 
         private static Func<Actor, bool> _Facing(float X)
@@ -53,10 +53,10 @@ namespace Game
 
         public Player()
         {
-            AddState((int)StateNames.STAND, new Game.State(41, _ApplyFriction(4.0f),
+            AddState((int)StateNames.STAND, new Game.State(41, _ApplyFriction(128.0f),
                 new Transition(_Not(_OnGround()), (int)StateNames.FLOAT, null),
-                new Transition(_Input("LEFT"), (int)StateNames.WALK_0, _SetXVelocity(-0.5f)),
-                new Transition(_Input("RIGHT"), (int)StateNames.WALK_0, _SetXVelocity(0.5f)),
+                new Transition(_Input("LEFT"), (int)StateNames.WALK_0, _SetXVelocity(-16.0f)),
+                new Transition(_Input("RIGHT"), (int)StateNames.WALK_0, _SetXVelocity(16.0f)),
                 new Transition(_Input("JUMP"), (int)StateNames.JUMP, null)));
 
             AddState((int)StateNames.WALK_0, new State(22, _applyRunForce,
@@ -127,7 +127,7 @@ namespace Game
 
             AddState((int)StateNames.JUMP, new State(39, _JumpAirControl(),
                 new Transition(_Or(_OnGround(), _YVelocityGreaterThan(0)), (int)StateNames.FLOAT, null)));
-            GetState((int)StateNames.JUMP)._Enter = (p) => p.Velocity.Y = -9;
+            GetState((int)StateNames.JUMP)._Enter = (p) => p.Velocity.Y = -320.0f;
             AddState((int)StateNames.FLOAT, new State(38, _JumpAirControl(),
                 new Transition(_YVelocityGreaterThan(0.1f), (int)StateNames.FALL, null),
                 new Transition(_OnGround(), (int)StateNames.STAND, null)));

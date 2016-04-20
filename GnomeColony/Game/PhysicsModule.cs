@@ -25,19 +25,17 @@ namespace Game
 
         public override void Update(float ElapsedSeconds)
         {
-            return;
-
             foreach (var actor in Actors)
             {
                 actor.OnGround = !SpaceOpen(actor, new Vector2(actor.Position.X, actor.Position.Y + PixelSize));
                 if (actor.OnGround)
                 {
-                    actor.ApplyFriction(0.2f);
+                    actor.ApplyFriction(2.0f);
                     if (actor.Velocity.Y > 0) actor.Velocity.Y = 0;
                 }
                 else
                 {
-                    actor.Velocity.Y += 32.0f * ElapsedSeconds;
+                    actor.Velocity.Y += 320.0f * ElapsedSeconds;
                 }
 
                 MoveActor(actor, actor.Velocity * ElapsedSeconds);
@@ -56,10 +54,10 @@ namespace Game
 
         private void WrapActorPosition(Actor A)
         {
-            while (A.Position.X < 0) A.Position.X += 64.0f;
-            while (A.Position.X >= 64.0f) A.Position.X -= 64.0f;
-            while (A.Position.Y < 0) A.Position.Y += 64.0f;
-            while (A.Position.Y >= 64.0f) A.Position.Y -= 64.0f;
+            while (A.Position.X < 0) A.Position.X += Map.PixelWidth;
+            while (A.Position.X >= Map.PixelWidth) A.Position.X -= Map.PixelWidth;
+            while (A.Position.Y < 0) A.Position.Y += Map.PixelHeight;
+            while (A.Position.Y >= Map.PixelHeight) A.Position.Y -= Map.PixelHeight;
         }
 
         private void MoveActor(Actor A, Vector2 Delta)
@@ -155,7 +153,7 @@ namespace Game
                     }
 
                     // Can't make full motion, try moving just on the X axis.
-                    else if (!CollidesWithSolid(A, startX, A.Position.Y))
+                    else  if (!CollidesWithSolid(A, startX, A.Position.Y))
                     {
                         A.Position.X = startX;
                         //if bounce != 0 direction = -direction;
@@ -196,9 +194,24 @@ namespace Game
                 (cell, x, y) =>
                 {
                     if (cell.Tile == null || !cell.Tile.Solid) return;
-                    var cellPoints = cell.Tile.CollisionPoints.Select(p => new Vector2(p.X + x, p.Y + y));
+
+                    var cellPoints = cell.Tile.CollisionPoints.Select(p => new Vector2((p.X + x) * Map.CellWidth, (p.Y + y) * Map.CellHeight));
+
                     if (Intersection.PolygonWithAABB(cellPoints.ToArray(), playerBox))
                         foundSolid = true;
+
+                    // Wrapping keeps the player in positive values... but what if his bounding box sticks over?
+                    if (playerBox.X < 0 && playerBox.Y < 0)
+                        if (Intersection.PolygonWithAABB(cellPoints.Select(p => new Vector2(p.X - Map.PixelWidth, p.Y - Map.PixelHeight)).ToArray(), playerBox))
+                            foundSolid = true;
+
+                    if (playerBox.X < 0)
+                        if (Intersection.PolygonWithAABB(cellPoints.Select(p => new Vector2(p.X - Map.PixelWidth, p.Y)).ToArray(), playerBox))
+                            foundSolid = true;
+
+                    if (playerBox.Y < 0)
+                        if (Intersection.PolygonWithAABB(cellPoints.Select(p => new Vector2(p.X, p.Y - Map.PixelHeight)).ToArray(), playerBox))
+                            foundSolid = true;
                 });
             return !foundSolid;
         }
