@@ -19,16 +19,22 @@ namespace Game
             frame.Texture = Blank;
             frame.Color = new Vector4(1, 0, 0, 1);
 
+            var layout = new Gem.Gui.FlowLayout(new Rectangle(16, 600 - 128 - 16, 800 - 32, 128), 4);
+
             GuiRoot.Children.Add(frame);
 
             for (int x = 0; x < 7 && x < StaticDevices.RootDevices.Count; ++x)
             {
                 var device = StaticDevices.RootDevices[x];
+
+                var placement = layout.PositionItem(device.Width * 32, device.Height * 32);
+
                 var icon = new Gui.UIItem();
-                icon.Shape = Gui.Shape.CreateQuad(16 + 8 + (40 * x), 600 - 128, 32 * device.Width, 32 * device.Height);
+                icon.Shape = Gui.Shape.CreateQuad(placement.X, placement.Y, placement.Width, placement.Height);
+
                 var deviceMesh = device.CreateMesh(Game.WireSet);
                 Mesh.Transform(deviceMesh, Matrix.CreateScale(32));
-                Mesh.Transform(deviceMesh, Matrix.CreateTranslation(24 + (40 * x), 600 - 128, 0.0f));
+                Mesh.Transform(deviceMesh, Matrix.CreateTranslation(placement.X, placement.Y, 0.0f));
 
                 icon.OnRender += (graphicsDevice, effect) =>
                 {

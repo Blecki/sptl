@@ -88,6 +88,7 @@ namespace Game.Input
             if (Game.Input.Check("ESCAPE"))
             {
                 InputState.ActiveTool = new DefaultInteractionTool();
+                Game.RemoveTransientRenderItem(this);
                 return;
             }
 
@@ -121,7 +122,20 @@ namespace Game.Input
                            wire => 1.0f);
 
                         if (Path.GoalFound)
+                        {
                             ExtractedPath = Path.FinalNode.ExtractPath();
+
+                            // Disallow internal connections within devices. The only possibility we need to
+                            // worry about is a path two tiles long that connects a device to itself.
+                            if (ExtractedPath.Count == 2)
+                            {
+                                var start = ExtractedPath[0];
+                                var end = ExtractedPath[1];
+                                if (start.Device != null && end.Device != null)
+                                    if (start.DeviceRoot.X == end.DeviceRoot.X && start.DeviceRoot.Y == end.DeviceRoot.Y)
+                                        ExtractedPath = null;
+                            }
+                        }
                         else
                             ExtractedPath = null;                        
                     }

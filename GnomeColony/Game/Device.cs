@@ -50,6 +50,7 @@ namespace Game
 
         public Func<int, Wire, Play, List<DeviceSignalActivation>> OnSignal = null;
         public Action<Wire, Play> OnClick = null;
+        public Func<int, Wire, Play, int> ChooseTile = null;
     }
 
     public static class StaticDevices
@@ -86,6 +87,19 @@ namespace Game
                     if (wire.Cell.ID == 2) return ActivationList(new DeviceSignalActivation { Condition = _always, Location = wire.Coordinate.Offset(1, -1) });
                     if (wire.Cell.ID == 3) return ActivationList(new DeviceSignalActivation { Condition = _always, Location = wire.Coordinate.Offset(-1, -1) });
                     else return ActivationList();
+                },
+                ChooseTile = (signal, wire, game) =>
+                {
+                    var leftOn = game.WireMap.GetCellUnsafe(wire.DeviceRoot).Signal == signal;
+                    var rightOn = game.WireMap.GetCellUnsafe(wire.DeviceRoot.Offset(1, 0)).Signal == signal;
+
+                    if (leftOn && rightOn)
+                        return wire.Cell.TileIndex + 96;
+                    else if (leftOn)
+                        return wire.Cell.TileIndex + 64;
+                    else if (rightOn)
+                        return wire.Cell.TileIndex + 32;
+                    return wire.Cell.TileIndex;
                 }
             };
 
@@ -107,12 +121,43 @@ namespace Game
                     {
                         var oppositeEndOffset = wire.Cell.ID == 0 ? 2 : -2;
                         return ActivationList(new DeviceSignalActivation
-                        {
+                        { 
                             Location = wire.Coordinate.Offset(0, oppositeEndOffset),
-                            Condition = (g) => g.WireMap.GetCellUnsafe(wire.Coordinate.Offset(0, wire.Cell.ID == 0 ? 1 : -1)).Signal == signal
+                            Condition = (g) => wire.Cell != null && g.WireMap.GetCellUnsafe(wire.Coordinate.Offset(0, wire.Cell.ID == 0 ? 1 : -1)).Signal == signal
                         });
                     }
                     else return ActivationList();
+                },
+                ChooseTile = (signal, wire, game) =>
+                {
+                    if (wire.Cell.ID == 0)
+                    {
+                        if (game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(0, 1)).Signal == signal
+                        && (game.WireMap.GetCellUnsafe(wire.Coordinate).Signal == signal ||
+                            game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(0, 2)).Signal == signal))
+                            return 46;
+                        else
+                            return 34;
+                    }
+                    else if (wire.Cell.ID == 1)
+                    {
+                        if (game.WireMap.GetCellUnsafe(wire.Coordinate).Signal == signal
+                        && (game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(0, -1)).Signal == signal ||
+                            game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(0, 1)).Signal == signal))
+                            return 62;
+                        else
+                            return 50;
+                    }
+                    else if (wire.Cell.ID == 2)
+                    {
+                        if (game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(0, -1)).Signal == signal
+                        && (game.WireMap.GetCellUnsafe(wire.Coordinate).Signal == signal ||
+                            game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(0, -2)).Signal == signal))
+                            return 78;
+                        else
+                            return 66;
+                    }
+                    return 0;
                 }
             };
 
@@ -134,10 +179,41 @@ namespace Game
                         return ActivationList(new DeviceSignalActivation
                         {
                             Location = wire.Coordinate.Offset(oppositeEndOffset, 0),
-                            Condition = (g) => g.WireMap.GetCellUnsafe(wire.Coordinate.Offset(wire.Cell.ID == 0 ? 1 : -1, 0)).Signal == signal
+                            Condition = (g) => wire.Cell != null && g.WireMap.GetCellUnsafe(wire.Coordinate.Offset(wire.Cell.ID == 0 ? 1 : -1, 0)).Signal == signal
                         });
                     }
                     else return ActivationList();
+                },
+                ChooseTile = (signal, wire, game) =>
+                {
+                    if (wire.Cell.ID == 0)
+                    {
+                        if (game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(1, 0)).Signal == signal
+                        && (game.WireMap.GetCellUnsafe(wire.Coordinate).Signal == signal ||
+                            game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(2, 0)).Signal == signal))
+                            return 72;
+                        else
+                            return 35;
+                    }
+                    else if (wire.Cell.ID == 1)
+                    {
+                        if (game.WireMap.GetCellUnsafe(wire.Coordinate).Signal == signal
+                        && (game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(-1, 0)).Signal == signal ||
+                            game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(1, 0)).Signal == signal))
+                            return 73;
+                        else
+                            return 36;
+                    }
+                    else if (wire.Cell.ID == 2)
+                    {
+                        if (game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(-1, 0)).Signal == signal
+                        && (game.WireMap.GetCellUnsafe(wire.Coordinate).Signal == signal ||
+                            game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(-2, 0)).Signal == signal))
+                            return 74;
+                        else
+                            return 37;
+                    }
+                    return 0;
                 }
             };
 
@@ -162,7 +238,7 @@ namespace Game
                         return ActivationList(new DeviceSignalActivation
                         {
                             Location = wire.Coordinate.Offset(0, oppositeEndOffset),
-                            Condition = (g) => g.WireMap.GetCellUnsafe(wire.Coordinate.Offset(0, wire.Cell.ID == 0 ? 1 : -1)).Signal != signal
+                            Condition = (g) => wire.Cell != null && g.WireMap.GetCellUnsafe(wire.Coordinate.Offset(0, wire.Cell.ID == 0 ? 1 : -1)).Signal != signal
                         });
                     }
                     else return ActivationList();
@@ -187,7 +263,7 @@ namespace Game
                         return ActivationList(new DeviceSignalActivation
                         {
                             Location = wire.Coordinate.Offset(oppositeEndOffset, 0),
-                            Condition = (g) => g.WireMap.GetCellUnsafe(wire.Coordinate.Offset(wire.Cell.ID == 0 ? 1 : -1, 0)).Signal != signal
+                            Condition = (g) => wire.Cell != null && g.WireMap.GetCellUnsafe(wire.Coordinate.Offset(wire.Cell.ID == 0 ? 1 : -1, 0)).Signal != signal
                         });
                     }
                     else return ActivationList();

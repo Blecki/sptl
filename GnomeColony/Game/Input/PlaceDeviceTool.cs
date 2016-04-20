@@ -59,6 +59,7 @@ namespace Game.Input
             if (Game.Input.Check("ESCAPE"))
             {
                 InputState.ActiveTool = new DefaultInteractionTool();
+                Game.RemoveTransientRenderItem(this);
                 return;
             }
 
@@ -91,11 +92,22 @@ namespace Game.Input
                         (w, x, y) =>
                         {
                             w.Device = Device;
-                            var cellIndex = ((y - tileUnderMouse.Y) * Device.Width) + (x - tileUnderMouse.X);
-                            w.Cell = Device.Cells[cellIndex];
-                            var chunk = Game.WireMap.GetChunkForCellAt(x, y);
+                            w.Cell = Device.Cells[((y - tileUnderMouse.Y) * Device.Width) + (x - tileUnderMouse.X)];
                             w.DeviceRoot = new Coordinate(tileUnderMouse.X, tileUnderMouse.Y);
-                            chunk.InvalidateMesh();
+
+                            if (Device.Width > 1 && x != tileUnderMouse.X) // We aren't on the left edge.
+                                w.Connections &= ~Wire.LEFT;
+
+                            if (Device.Width > 1 && x != tileUnderMouse.X + Device.Width - 1) // We aren't on the right edge.
+                                w.Connections &= ~Wire.RIGHT;
+
+                            if (Device.Height > 1 && y != tileUnderMouse.Y) // We aren't on the top edge.
+                                w.Connections &= ~Wire.UP;
+
+                            if (Device.Height > 1 && y != tileUnderMouse.Y + Device.Height - 1) // We aren't on the bottom edge.
+                                w.Connections &= ~Wire.DOWN;
+
+                            Game.WireMap.GetChunkForCellAt(x, y).InvalidateMesh();
                         });
                 }
 

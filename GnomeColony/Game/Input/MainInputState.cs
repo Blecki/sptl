@@ -51,8 +51,9 @@ namespace Game
 
             var deviceButton = new Gui.UIItem();
             deviceButton.Shape = Gui.Shape.CreateQuad(8, 256 + 16 + 4 + 32 + 32 + 4, 32, 32);
-            deviceButton.Color = new Vector4(0, 1, 0, 1);
-            deviceButton.Texture = Blank;
+            deviceButton.Color = new Vector4(1, 1, 1, 1);
+            deviceButton.Texture = Game.GuiSet.Texture;
+            deviceButton.UVTransform = Game.GuiSet.TileMatrix(1);
             deviceButton.OnClick += p =>
             {
                 var deviceSelector = new DeviceSelectInputState(Device, p);
@@ -68,8 +69,9 @@ namespace Game
 
             var eraseButton = new Gui.UIItem();
             eraseButton.Shape = Gui.Shape.CreateQuad(8, 256 + 16 + 4 + 32 + 32 + 4 + 36, 32, 32);
-            eraseButton.Color = new Vector4(0, 1, 0, 1);
-            eraseButton.Texture = Blank;
+            eraseButton.Color = new Vector4(1, 1, 1, 1);
+            eraseButton.Texture = Game.GuiSet.Texture;
+            eraseButton.UVTransform = Game.GuiSet.TileMatrix(2);
             eraseButton.OnClick += p => ActiveTool = new Input.EraserTool();
 
             GuiRoot.Children.Add(eraseButton);

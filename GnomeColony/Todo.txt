@@ -1,6 +1,13 @@
-﻿Icons for tool buttons
-Properly space devices in selector panel
-Erase internal connections under device when placing device
-LED device - 
+﻿LED device - 
 	Render world in 'twilight'. No lights but with ambient light?
 	Place lights on powered LEDs.
+Show signaled paths through devices.
+Re-enable physics
+Player moves correctly
+Limit construction of wires and devices to certain radius around player
+Need more slopes
+Move tile definition out of play.cs
+Player interacts with devices
+Other game objects
+'Track' device
+Game object that moves on track

@@ -56,7 +56,7 @@ namespace Game
         public Vector2 MouseWorldPosition;
 
         private float TimeSinceSignalTick = 0.0f;
-        private float SignalTickRate = 1.0f;
+        private float SignalTickRate = 0.1f;
 
 
         public TileSheet GuiSet;
@@ -226,7 +226,7 @@ namespace Game
 
             TileSet = new TileSheet(Content.Load<Texture2D>("tiles"), 16, 16);
             WireSet = new TileSheet(Content.Load<Texture2D>("wires"), 8, 8);
-            GuiSet = new TileSheet(Content.Load<Texture2D>("gui"), 32, 32);
+            GuiSet = new TileSheet(Content.Load<Texture2D>("gui"), 16, 16);
 
             StaticDevices.InitializeStaticDevices();
 
@@ -241,7 +241,7 @@ namespace Game
                 grid => new MapChunkRenderBuffer<Wire>(grid, WireSet, 
                     w => new int[] {
                         (w.Connections == 0 ? -1 : (w.Signal == SimulationID ? w.Connections + 16 : w.Connections)),
-                        (w.Cell == null ? -1 : w.Cell.TileIndex)
+                        (w.Device == null ? -1 : (w.Device.ChooseTile == null ? w.Cell.TileIndex : w.Device.ChooseTile(SimulationID, w, this)))
                     },
                     BottomTileSize, BottomTileSize));
             WireMap.ForEachCellInWorldRect(0, 0, 128 * BottomTileSize, 128 * BottomTileSize, (w, x, y) =>
