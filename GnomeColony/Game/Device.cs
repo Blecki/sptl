@@ -242,6 +242,37 @@ namespace Game
                         });
                     }
                     else return ActivationList();
+                },
+                ChooseTile = (signal, wire, game) =>
+                {
+                    if (wire.Cell.ID == 0)
+                    {
+                        if (game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(0, 1)).Signal != signal
+                        && (game.WireMap.GetCellUnsafe(wire.Coordinate).Signal == signal ||
+                            game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(0, 2)).Signal == signal))
+                            return 47;
+                        else
+                            return 38;
+                    }
+                    else if (wire.Cell.ID == 1)
+                    {
+                        if (game.WireMap.GetCellUnsafe(wire.Coordinate).Signal != signal
+                        && (game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(0, -1)).Signal == signal ||
+                            game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(0, 1)).Signal == signal))
+                            return 63;
+                        else
+                            return 54;
+                    }
+                    else if (wire.Cell.ID == 2)
+                    {
+                        if (game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(0, -1)).Signal != signal
+                        && (game.WireMap.GetCellUnsafe(wire.Coordinate).Signal == signal ||
+                            game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(0, -2)).Signal == signal))
+                            return 79;
+                        else
+                            return 70;
+                    }
+                    return 0;
                 }
             };
 
@@ -267,6 +298,37 @@ namespace Game
                         });
                     }
                     else return ActivationList();
+                },
+                ChooseTile = (signal, wire, game) =>
+                {
+                    if (wire.Cell.ID == 0)
+                    {
+                        if (game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(1, 0)).Signal != signal
+                        && (game.WireMap.GetCellUnsafe(wire.Coordinate).Signal == signal ||
+                            game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(2, 0)).Signal == signal))
+                            return 75;
+                        else
+                            return 39;
+                    }
+                    else if (wire.Cell.ID == 1)
+                    {
+                        if (game.WireMap.GetCellUnsafe(wire.Coordinate).Signal != signal
+                        && (game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(-1, 0)).Signal != signal ||
+                            game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(1, 0)).Signal == signal))
+                            return 76;
+                        else
+                            return 40;
+                    }
+                    else if (wire.Cell.ID == 2)
+                    {
+                        if (game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(-1, 0)).Signal != signal
+                        && (game.WireMap.GetCellUnsafe(wire.Coordinate).Signal == signal ||
+                            game.WireMap.GetCellUnsafe(wire.Coordinate.Offset(-2, 0)).Signal == signal))
+                            return 77;
+                        else
+                            return 41;
+                    }
+                    return 0;
                 }
             };
 
@@ -396,12 +458,37 @@ namespace Game
             verticalSwitch.Rotated = horizontalSwitch;
             horizontalSwitch.Rotated = verticalSwitch;
 
+            var led = new Device
+            {
+                Width = 1,
+                Height = 1,
+                Cells = new DeviceCell[1]
+                {
+                    new DeviceCell { TileIndex = 52, Terminal = true, ID = 0 }
+                },
+                OnSignal = (signal, wire, game) =>
+                {
+                    game.Lights.Add(new Play.Light
+                    {
+                        Location = new Vector2(
+                            (wire.Coordinate.X * game.WireMap.CellWidth) + (game.WireMap.CellWidth / 2),
+                            (wire.Coordinate.Y * game.WireMap.CellHeight) + (game.WireMap.CellHeight / 2)),
+                        Color = Vector4.One,
+                        Size = 512
+                    });
+                    return ActivationList();
+                }
+            };
+
+            led.Rotated = led;
+
             RootDevices = new List<Device>();
             RootDevices.Add(crossover);
             RootDevices.Add(negative);
             RootDevices.Add(verticalTransistor);
             RootDevices.Add(verticalNotTransistor);
             RootDevices.Add(verticalSwitch);
+            RootDevices.Add(led);
         }
     }
 }

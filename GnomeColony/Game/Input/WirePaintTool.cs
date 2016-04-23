@@ -85,6 +85,8 @@ namespace Game.Input
 
         public void Update(Play Game, MainInputState InputState)
         {
+            InputState.ShowEditableWireRange = true;
+
             if (Game.Input.Check("ESCAPE"))
             {
                 InputState.ActiveTool = new DefaultInteractionTool();
@@ -187,6 +189,8 @@ namespace Game.Input
 
                     if (_x >= bottomRight.X) _x -= Game.WireMap.PixelWidth;
                     if (_y >= bottomRight.Y) _y -= Game.WireMap.PixelHeight;
+                    if (_x < topLeft.X) _x += Game.WireMap.PixelWidth;
+                    if (_y < topLeft.Y) _y += Game.WireMap.PixelHeight;
 
                     DiffuseEffect.Parameters["World"].SetValue(Matrix.CreateTranslation(_x, _y, 0.0f));
                     DiffuseEffect.Parameters["UVTransform"].SetValue(Game.WireSet.TileMatrix(connections));

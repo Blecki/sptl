@@ -18,6 +18,8 @@ namespace Game.Input
 
         public void Update(Play Game, MainInputState InputState)
         {
+            InputState.ShowEditableTileRange = true;
+
             if (Game.Input.Check("ESCAPE"))
             {
                 InputState.ActiveTool = new DefaultInteractionTool();

@@ -163,7 +163,7 @@ namespace Game
         public ChunkedMap<Wire, MapChunkRenderBuffer<Wire>> WireMap;
         private int BottomTileSize = 16;
         private TileSheet PlayerTileSet;
-        private Actor TestActor;
+        public Actor Player;
 
         private List<Module> Modules = new List<Module>();
 
@@ -199,8 +199,8 @@ namespace Game
             public float Size;
         }
 
-        private List<Light> Lights = new List<Light>();
-        
+        public List<Light> Lights = new List<Light>();
+                
         public Play()
         {
         }
@@ -256,7 +256,7 @@ namespace Game
                 AddSlopeLine(x, y);
 
             PlayerTileSet = new TileSheet(Content.Load<Texture2D>("player"), 32, 48);
-            TestActor = new Player
+            Player = new Player
             {
                 Position = new Vector2(10, 10),
                 TileSheet = PlayerTileSet,
@@ -305,16 +305,12 @@ namespace Game
             Input.AddBinding("ROTATEDEVICE", new KeyboardBinding(Keys.Z, KeyBindingType.Pressed));
             Input.AddBinding("ESCAPE", new KeyboardBinding(Keys.Escape, KeyBindingType.Pressed));
 
-            Lights.Add(new Light { Size = 64 * 16, Location = new Vector2(2, 2), Color = new Vector4(1.0f, 0.0f, 0.0f, 1.0f) });
-            Lights.Add(new Light { Size = 32 * 16, Color = Vector4.One });
-
-
             DebugDisplay = new TextDisplay(50, 2, new Gem.Gui.BitmapFont(Content.Load<Texture2D>("small-font"), 6, 8, 6), Main.GraphicsDevice, Content);
 
             Modules.Add(new PhysicsModule(Map));
             Modules.Add(new EntityStateModule());
 
-            foreach (var module in Modules) module.NewEntity(TestActor);
+            foreach (var module in Modules) module.NewEntity(Player);
 
             PushInputState(new MainInputState(this, Main.GraphicsDevice, Content));
         }
@@ -335,18 +331,21 @@ namespace Game
             //if (Input.Check("LEFTCLICK"))
             //    Map[unprojectedMPos.X, unprojectedMPos.Y].Tile = 65;
 
-            TestActor.Input = Input;
+            Player.Input = Input;
 
             foreach (var module in Modules) module.Update(ElapsedSeconds);
 
-            Lights[0].Location = TestActor.Position;
-            Camera.focus = TestActor.Position;
+            if (Lights.Count == 0) Lights.Add(new Light { Location = Player.Position, Size = 32 * 16, Color = Vector4.One });
+            Camera.focus = Player.Position;
+            Lights[0].Location = Player.Position;
 
             DebugDisplay.SetString(String.Format("{0}, {1}             ", MouseWorldPosition.X, MouseWorldPosition.Y), 0, 0, Color.Black);
 
             TimeSinceSignalTick += ElapsedSeconds;
             if (TimeSinceSignalTick > SignalTickRate)
             {
+                Lights.Clear();
+                Lights.Add(new Light { Location = Player.Position, Size = 32 * 16, Color = Vector4.One });
                 TimeSinceSignalTick = 0.0f;
                 Simulate();
             }
@@ -413,12 +412,34 @@ namespace Game
                 transient.Render(Main.GraphicsDevice, DiffuseEffect, this);
 
             #region Lights
-            /*
+            
             foreach (var light in Lights)
             {
+                // Calculate lights screen position, accounting for wrap.
+                //  - Assume stored light position is always positive. So we need to account for 
+                //  lights at the extreme right of the world showing up in negative view space.
+                //  And lights at the extreme left showing up when the player is at the extreme right.
+                var lightPosition = light.Location;
+                if (lightPosition.X > bottomRight.X + light.Size)
+                    lightPosition.X -= Map.PixelWidth;
+                if (lightPosition.Y > bottomRight.Y + light.Size)
+                    lightPosition.Y -= Map.PixelHeight;
+
+                if (lightPosition.X < topLeft.X - light.Size)
+                    lightPosition.X += Map.PixelWidth;
+                if (lightPosition.Y < topLeft.Y - light.Size)
+                    lightPosition.Y += Map.PixelHeight;
+
+                // Cull lights that are off screen.
+                if (lightPosition.X < topLeft.X - light.Size) continue;
+                if (lightPosition.X > bottomRight.X + light.Size) continue;
+                if (lightPosition.Y < topLeft.Y - light.Size) continue;
+                if (lightPosition.Y > bottomRight.Y + light.Size) continue;
+                
+
                 Main.GraphicsDevice.SetRenderTarget(ShadowBuffer);
                 Main.GraphicsDevice.Clear(Color.Black);
-
+                
                 #region Shadows
 
                 ShadowEffect.CurrentTechnique = ShadowEffect.Techniques[0];
@@ -426,9 +447,8 @@ namespace Game
                 ShadowEffect.Parameters["View"].SetValue(Camera.View);
                 ShadowEffect.Parameters["Projection"].SetValue(Camera.Projection);
 
-                // Limit this only to the span defined by the set of lights that can affect the screen.
-
-                Map.ForEachCell(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y,
+                
+                Map.ForEachCellInWorldRect(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y,
                 (c, x, y) =>
                 {
                     if (c.Tile != null && c.Tile.CastShadow)
@@ -437,19 +457,19 @@ namespace Game
                         foreach (var shadowEdge in c.Tile.ShadowEdges)
                         {
                             if (shadowEdge.Direction == ShadowEdgeDirection.Internal)
-                                DrawSegmentShadow(offset + shadowEdge.V0, offset + shadowEdge.V1, light.Location);
+                                DrawSegmentShadow((offset + shadowEdge.V0) * Map.CellWidth, (offset + shadowEdge.V1) * Map.CellHeight, lightPosition);
                             else
                             {
                                 var neighborCoordinate = ShadowEdge.EdgeNeighbor(new Coordinate(x, y), shadowEdge.Direction);
-                                var neighbor = Map[neighborCoordinate];
+                                var neighbor = Map.GetCellUnsafe(neighborCoordinate);
                                 if (neighbor.Tile == null || !neighbor.Tile.CastShadow)
-                                    DrawSegmentShadow(offset + shadowEdge.V0, offset + shadowEdge.V1, light.Location);
+                                    DrawSegmentShadow((offset + shadowEdge.V0) * Map.CellWidth, (offset + shadowEdge.V1) * Map.CellHeight, lightPosition);
                                 else
                                 {
                                     var oppositeDirection = ShadowEdge.Opposite(shadowEdge.Direction);
                                     var adjacentEdge = neighbor.Tile.ShadowEdges.FirstOrDefault(e => e.Direction == oppositeDirection);
                                     if (adjacentEdge == null)
-                                        DrawSegmentShadow(offset + shadowEdge.V0, offset + shadowEdge.V1, light.Location);
+                                        DrawSegmentShadow((offset + shadowEdge.V0) * Map.CellWidth, (offset + shadowEdge.V1) * Map.CellHeight, lightPosition);
                                 }
                             }
                         }
@@ -463,7 +483,7 @@ namespace Game
                 Main.GraphicsDevice.SetRenderTarget(MainBuffer);
                 LightEffect.CurrentTechnique = LightEffect.Techniques[0];
 
-                LightEffect.Parameters["World"].SetValue(Matrix.CreateScale(light.Size) * Matrix.CreateTranslation(light.Location.X, light.Location.Y, 0));
+                LightEffect.Parameters["World"].SetValue(Matrix.CreateScale(light.Size) * Matrix.CreateTranslation(lightPosition.X, lightPosition.Y, 0));
                 LightEffect.Parameters["View"].SetValue(Camera.View);
                 LightEffect.Parameters["Projection"].SetValue(Camera.Projection);
                 LightEffect.Parameters["Diffuse"].SetValue(DiffuseBuffer);
@@ -475,7 +495,7 @@ namespace Game
 
                 Mesh.Render(Main.GraphicsDevice);
             }
-            */
+
             #endregion
 
             Main.GraphicsDevice.SetRenderTarget(null);
@@ -483,7 +503,7 @@ namespace Game
             BlitEffect.Parameters["World"].SetValue(Matrix.Identity);
             BlitEffect.Parameters["View"].SetValue(Matrix.Identity);
             BlitEffect.Parameters["Projection"].SetValue(Matrix.CreateOrthographic(1, 1, -1, 1));
-            BlitEffect.Parameters["Diffuse"].SetValue(DiffuseBuffer /* Change to MainBuffer for lighting */);
+            BlitEffect.Parameters["Diffuse"].SetValue(MainBuffer /* Change to MainBuffer for lighting */);
             BlitEffect.CurrentTechnique.Passes[0].Apply();
             Mesh.Render(Main.GraphicsDevice);
 
@@ -508,7 +528,7 @@ namespace Game
             var v0 = new Vector2(P0.X, P0.Y); //Vector2.Transform(P0, Transform);
             var v1 = new Vector2(P1.X, P1.Y); //Vector2.Transform(P1, Transform);
 
-            var A = 24.0;
+            var A = 320.0;
 
             var F2 = (v1 - v0).LengthSquared();
             var H2 = (LightPosition - v0).LengthSquared();

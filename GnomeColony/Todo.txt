@@ -1,13 +1,23 @@
 ﻿LED device - 
 	Render world in 'twilight'. No lights but with ambient light?
 	Place lights on powered LEDs.
-Show signaled paths through devices.
-Re-enable physics
-Player moves correctly
-Limit construction of wires and devices to certain radius around player
 Need more slopes
 Move tile definition out of play.cs
 Player interacts with devices
 Other game objects
 'Track' device
 Game object that moves on track
+Apply activation hilite to not transistor
+Place tiles in two layers
+Disallow placing tiles where there are already tiles
+Require backing tile to place devices and wires
+Tile harvesting
+Gain resources for harvesting tiles
+Placing tiles, wires, and devices costs resources
+Save world
+Load world
+Player can ride on moving platforms
+Ladders
+Climbing? [MAYBE]
+Edit range is circular
+Actually confine editing to edit range
